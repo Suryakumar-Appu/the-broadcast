@@ -215,6 +215,29 @@ html, body { width:100%; height:100%; overflow:hidden; background:#0e0e0e; }
   margin-left:auto; flex-shrink:0;
 }
 .bezel-status.connected { color:#4AC868; text-shadow:0 0 6px rgba(74,200,104,0.5); }
+
+/* Control buttons row */
+.bezel-btns {
+  display:flex; gap:6px; padding:6px 8px 7px;
+  background:#1a3340;
+  border-top:1px solid rgba(0,0,0,0.3);
+}
+.bezel-btn {
+  flex:1; padding:7px 0;
+  background:#243e4a;
+  border:none; border-radius:5px; cursor:pointer;
+  font-family:'VT323', monospace; font-size:13px; letter-spacing:0.12em;
+  color:rgba(200,220,230,0.7);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.3);
+  touch-action:manipulation;
+  transition:background 0.08s ease, transform 0.08s ease, box-shadow 0.08s ease;
+}
+.bezel-btn:active {
+  background:#4A8FA8;
+  color:#fff;
+  transform:translateY(1px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);
+}
 .screen-overlay {
   position:absolute; inset:10px; border-radius:6px;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -317,6 +340,11 @@ html, body { width:100%; height:100%; overflow:hidden; background:#0e0e0e; }
           </div>
           <div class="bezel-status" id="bezel-status">NO SIGNAL</div>
         </div>
+        <div class="bezel-btns">
+          <button class="bezel-btn" id="btn-freq">FREQ</button>
+          <button class="bezel-btn" id="btn-bias">BIAS</button>
+          <button class="bezel-btn" id="btn-gain">GAIN</button>
+        </div>
         <div class="screen-overlay" id="screen-overlay">
           <div class="signal-bar-wrap" id="signal-bar-wrap" style="display:none">
             <div class="signal-bar-fill" id="signal-bar-fill"></div>
@@ -335,7 +363,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#0e0e0e; }
           </div>
         </div>
         <div class="dial-wrap">
-          <div class="ctrl-label">TUNE</div>
+          <div class="ctrl-label">BIAS</div>
           <div class="dial" id="dial-tune">
             <div class="dial-tick" id="dial-tune-tick"></div>
             <div class="dial-pos" id="dial-tune-pos">1</div>
@@ -479,6 +507,28 @@ function initControls() {
 
   updateDialVisual('freq');
   updateDialVisual('tune');
+
+  // Bezel buttons — large tap targets for mobile
+  function addBtnListener(id, action) {
+    const btn = document.getElementById(id);
+    btn.addEventListener('click', (e) => { e.stopPropagation(); if (currentScreen === 'game') action(); });
+    btn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); if (currentScreen === 'game') action(); });
+  }
+  addBtnListener('btn-freq', () => {
+    ctrlPos.freq = (ctrlPos.freq + 1) % DIAL_STEPS;
+    updateDialVisual('freq');
+    updateSigBars(calcSignalStrength());
+  });
+  addBtnListener('btn-bias', () => {
+    ctrlPos.tune = (ctrlPos.tune + 1) % DIAL_STEPS;
+    updateDialVisual('tune');
+    updateSigBars(calcSignalStrength());
+  });
+  addBtnListener('btn-gain', () => {
+    ctrlPos.gain = (ctrlPos.gain + 1) % GAIN_STEPS;
+    setGain(ctrlPos.gain);
+    updateSigBars(calcSignalStrength());
+  });
 }
 
 function updateDialVisual(key) {
